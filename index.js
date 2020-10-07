@@ -55,12 +55,11 @@ async function asanaOperations(
 try {
   const ASANA_PAT = core.getInput('asana-pat'),
     TARGETS = core.getInput('targets'),
-    TRIGGER_PHRASE = core.getInput('trigger-phrase'),
     TASK_COMMENT = core.getInput('task-comment'),
     TASK_PULL_REQUEST_FIELD_GID = core.getInput('pull-request-field-gid'),
     PULL_REQUEST = github.context.payload.pull_request,
     REGEX = new RegExp(
-      `${TRIGGER_PHRASE}\\s*https:\\/\\/app.asana.com\\/(\\d+)\\/(?<project>\\d+)\\/(?<task>\\d+).*?`,
+      `\\[https:\\/\\/app.asana.com\\/(\\d+)\\/(?<project>\\d+)\\/(?<task>\\d+).*\\]`,
       'g'
     );
   let taskComment = null,
@@ -80,7 +79,7 @@ try {
     if (taskId) {
       asanaOperations(ASANA_PAT, targets, taskId, pullRequestFieldGid, taskComment, pullRequestUrl);
     } else {
-      core.info(`Invalid Asana task URL after the trigger phrase ${TRIGGER_PHRASE}`);
+      core.info('Invalid Asana task URL');
     }
   }
 } catch (error) {
