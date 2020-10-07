@@ -6,6 +6,7 @@ async function asanaOperations(
   asanaPAT,
   targets,
   taskId,
+  pullRequestFieldGid,
   taskComment,
   pullRequestUrl
 ) {
@@ -33,11 +34,13 @@ async function asanaOperations(
       }
     });
 
-    await client.tasks.update(taskId, {
-      custom_fields: {
-        "1197740218331194": pullRequestUrl,
-      },
-    })
+    if (pullRequestFieldGid) {
+      await client.tasks.update(taskId, {
+        custom_fields: {
+          [pullRequestFieldGid]: pullRequestUrl,
+        },
+      })
+    }
 
     if (taskComment) {
       await client.tasks.addComment(taskId, {
@@ -54,6 +57,7 @@ try {
     TARGETS = core.getInput('targets'),
     TRIGGER_PHRASE = core.getInput('trigger-phrase'),
     TASK_COMMENT = core.getInput('task-comment'),
+    TASK_PULL_REQUEST_FIELD_GID = core.getInput('pull-request-field-gid'),
     PULL_REQUEST = github.context.payload.pull_request,
     REGEX = new RegExp(
       `${TRIGGER_PHRASE}\\s*https:\\/\\/app.asana.com\\/(\\d+)\\/(?<project>\\d+)\\/(?<task>\\d+).*?`,
@@ -61,6 +65,7 @@ try {
     );
   let taskComment = null,
     targets = TARGETS? JSON.parse(TARGETS) : [],
+    pullRequestFieldGid = TASK_PULL_REQUEST_FIELD_GID,
     pullRequestUrl = PULL_REQUEST.html_url,
     parseAsanaURL = null;
 
@@ -73,7 +78,7 @@ try {
   while ((parseAsanaURL = REGEX.exec(PULL_REQUEST.body)) !== null) {
     let taskId = parseAsanaURL.groups.task;
     if (taskId) {
-      asanaOperations(ASANA_PAT, targets, taskId, taskComment, pullRequestUrl);
+      asanaOperations(ASANA_PAT, targets, taskId, pullRequestFieldGid, taskComment, pullRequestUrl);
     } else {
       core.info(`Invalid Asana task URL after the trigger phrase ${TRIGGER_PHRASE}`);
     }
